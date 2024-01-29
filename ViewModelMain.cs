@@ -157,6 +157,23 @@ namespace ApiDemo
             InProgress = false;
         }
         
+        string DetectMimeSimple(string filename)
+        {
+            string ext = System.IO.Path.GetExtension(filename).ToLower();
+            switch(ext)
+            {
+                case "json":
+                    return "application/json";
+                case "shape":
+                    return "application/vnd.ws-doc";
+                case "js":
+                    return "text/javascript";
+                case "xml":
+                    return "text/xml";
+            }
+            return "application/octet-stream";
+        }
+
         public async Task<bool> TestUpload()
         {
             if (api == null)
@@ -194,11 +211,11 @@ namespace ApiDemo
                     }
 
                     if (File.Exists(ShapeFile))
-                        await api.SendResource(created.id, ShapeFile, "application/vnd.ws-doc");
+                        await api.SendResource(created.id, ShapeFile, DetectMimeSimple(ShapeFile));
                     if (File.Exists(ScriptFile))
-                        await api.SendResource(created.id, ScriptFile, "text/javascript");
+                        await api.SendResource(created.id, ScriptFile, DetectMimeSimple(ScriptFile));
                     if (File.Exists(DataFile))
-                        await api.SendResource(created.id, DataFile, "text/xml");
+                        await api.SendResource(created.id, DataFile, DetectMimeSimple(DataFile));
 
                     selected = await api.GetService(created.id);
                     if (selected != null)
@@ -225,7 +242,7 @@ namespace ApiDemo
                         MessageOutput($"  Service {selected.id} has resource {resource.name}");
 
                         if (resource.name == dataFile)
-                            await api.UpdateResource(selected.id, resource.id, DataFile, "text/xml");
+                            await api.UpdateResource(selected.id, resource.id, DataFile, DetectMimeSimple(DataFile));
 
                         if (resource.name == "test.xml")
                             await api.DeleteResource(selected.id, resource.id);
