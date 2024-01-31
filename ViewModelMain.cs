@@ -162,6 +162,11 @@ namespace ApiDemo
             string ext = System.IO.Path.GetExtension(filename).ToLower();
             switch(ext)
             {
+                case "jpg":
+                case "jpeg":
+                    return "image/jpeg";
+                case "png":
+                    return "image/png";
                 case "json":
                     return "application/json";
                 case "shape":
@@ -185,6 +190,10 @@ namespace ApiDemo
                 return false;
             }
 
+            DocumentAPI.Info? info = await api.GetInfo();
+            if(info != null)
+                MessageOutput($"API {info.name} {info.version}");
+
             try
             {
                 string shapeFile = Path.GetFileName(ShapeFile);
@@ -203,7 +212,7 @@ namespace ApiDemo
                         return false;
                     }
 
-                    DocumentAPI.Created? created = await api.CreateService(shapeFile);
+                    DocumentAPI.Service? created = await api.CreateService(shapeFile);
                     if (null == created)
                     {
                         MessageOutput($"Failed to create service for {shapeFile}");
@@ -276,6 +285,10 @@ namespace ApiDemo
                 return false;
             }
 
+            DocumentAPI.Info? info = await api.GetInfo();
+            if (info != null)
+                MessageOutput($"API {info.name} {info.version}");
+
             try
             {
                 string shapeFile = Path.GetFileName(ShapeFile);
@@ -307,7 +320,7 @@ namespace ApiDemo
 
                 // create a new job
 
-                DocumentAPI.Created? job = null;
+                DocumentAPI.Job? job = null;
                 {
                     job = await api.CreateJob(selected.id, resultFile, "application/pdf");
                     if (null == job)

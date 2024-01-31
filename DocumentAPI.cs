@@ -7,6 +7,7 @@ using System.Net.Http.Headers;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Reflection;
+using System.Text.RegularExpressions;
 
 namespace ApiDemo
 {
@@ -107,7 +108,7 @@ namespace ApiDemo
             return JsonSerializer.Deserialize<Service>(data);
         }
 
-        public async Task<Created?> CreateService(string name)
+        public async Task<Service?> CreateService(string name)
         {
             bool connected = await Authenticate();
             if (!connected)
@@ -132,7 +133,7 @@ namespace ApiDemo
 
             string data = await res.Content.ReadAsStringAsync();
 
-            return JsonSerializer.Deserialize<Created?>(data);
+            return JsonSerializer.Deserialize<Service?>(data);
         }
 
         public async Task<bool> DeleteService(string service)
@@ -224,7 +225,7 @@ namespace ApiDemo
             return true;
         }
 
-        public async Task<Created?> CreateJob(string service, string name, string contenttype)
+        public async Task<Job?> CreateJob(string service, string name, string contenttype)
         {
             bool connected = await Authenticate();
             if (!connected)
@@ -252,7 +253,7 @@ namespace ApiDemo
 
             string data = await res.Content.ReadAsStringAsync();
 
-            return JsonSerializer.Deserialize<Created?>(data);
+            return JsonSerializer.Deserialize<Job?>(data);
         }
 
         public async Task<List<Job>?> GetJobs(string service)
@@ -391,6 +392,12 @@ namespace ApiDemo
             public string id { get; set; } = "";
         }
 
+        public class Info
+        {
+            public string name { get; set; } = "";
+            public string version { get; set; } = "";
+        }
+
         public class Service
         {
             public string type { get; set; } = "";
@@ -401,25 +408,34 @@ namespace ApiDemo
             public string id { get; set; } = "";
         }
 
-        public class Info
-        {
-            public string name { get; set; } = "";
-            public string version { get; set; } = "";
-        }
-
-        public class Created
-        {
-            public string id { get; set; } = "";
-        }
-
         public class Resource
         {
             public string id { get; set; } = "";
-            [JsonPropertyName("content-type")]
             public string content_type { get; set; } = "";
-            [JsonPropertyName("content-length")]
             public int content_length { get; set; } = 0;
-            public string name { get; set; } = "";
+            public string content_disposition { get; set; } = "";
+            public string etag { get; set; } = "";
+            public Timestamps timestamps { get; set; } = new Timestamps();
+            [JsonIgnore]
+            public string name
+            {
+                get
+                {
+                    // "attachment; filename="mafia.json""
+                    if (string.IsNullOrEmpty(content_disposition))
+                        return "";
+
+                    Match m = Regex.Match(content_disposition, @"([""'])(?:(?=(\\?))\2.)*?\1");
+                    if (!m.Success)
+                        return "";
+
+                    return m.Value.Trim('\"');
+                }
+                set
+                {
+                    content_disposition = $"attachment; filename=\"{value}\"";
+                }
+            }
         }
 
         public class Timestamps
