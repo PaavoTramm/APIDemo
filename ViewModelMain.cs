@@ -17,16 +17,32 @@ namespace ApiDemo
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
 
-        public string URI { get; set; } = "https://api.woodston.ee/v1/";
+        private string uri = "https://api.woodston.ee/v1/";
+        public string URI
+        {
+            get => uri;
+            set
+            {
+                if (uri == value) return;
+                uri = value;
+                ResetApi();
+            }
+        }
+
+        private void ResetApi()
+        {
+            api?.Dispose();
+            api = null;
+        }
         public string UserName
         {
             get { return Settings.Current.UserName; }
-            set { Settings.Current.UserName = value; Settings.Instance.Save(); }
+            set { if (Settings.Current.UserName == value) return; Settings.Current.UserName = value; Settings.Instance.Save(); ResetApi(); }
         }  
         public string Password
         {
             get { return Settings.Current.Password; }
-            set { Settings.Current.Password = value; Settings.Instance.Save(); }
+            set { if (Settings.Current.Password == value) return; Settings.Current.Password = value; Settings.Instance.Save(); ResetApi(); }
         }  
         public string ShapeFile
         {
@@ -186,7 +202,7 @@ namespace ApiDemo
 
             if (false == await api.Authenticate())
             {
-                MessageOutput($"Failed to authenticate {UserName}");
+                MessageOutput($"Failed to authenticate {UserName}: {api.LastAuthenticationError}");
                 return false;
             }
 
@@ -281,7 +297,7 @@ namespace ApiDemo
 
             if( false == await api.Authenticate() )
             {
-                MessageOutput($"Failed to authenticate {UserName}");
+                MessageOutput($"Failed to authenticate {UserName}: {api.LastAuthenticationError}");
                 return false;
             }
 

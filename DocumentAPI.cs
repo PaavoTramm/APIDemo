@@ -11,7 +11,7 @@ using System.Text.RegularExpressions;
 
 namespace ApiDemo
 {
-    internal class DocumentAPI
+    internal class DocumentAPI : IDisposable
     {
         public DocumentAPI(string url, string username, string password)
         {
@@ -20,25 +20,36 @@ namespace ApiDemo
             Password = password;
         }
 
+        public string LastAuthenticationError { get; private set; } = "";
+
+        public void Dispose() => client?.Dispose();
+
         public async Task<bool> Authenticate()
         {
             if (null == auth || auth.access_token_expires_at < DateTime.UtcNow.AddMinutes(5))
             {
                 auth = null;
+                LastAuthenticationError = "";
 
-                HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, "authenticate");
+                using HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, "authenticate");
                 request.Headers.Add("Authorization", "Basic " + Convert.ToBase64String(Encoding.UTF8.GetBytes($"{UserName}:{Password}")));
 
-                HttpResponseMessage res = await Client.SendAsync(request);
+                using HttpResponseMessage res = await Client.SendAsync(request);
                 if (res.StatusCode != System.Net.HttpStatusCode.OK)
+                {
+                    LastAuthenticationError = $"HTTP {(int)res.StatusCode} ({res.ReasonPhrase})";
                     return false;
+                }
 
                 string data = await res.Content.ReadAsStringAsync();
 
                 auth = JsonSerializer.Deserialize<AuthVal?>(data);
 
-                if (auth?.access_token == null)
+                if (string.IsNullOrEmpty(auth?.access_token))
+                {
+                    LastAuthenticationError = "The server response did not contain an access token.";
                     return false;
+                }
 
                 Client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", auth?.access_token);
             }
@@ -456,6 +467,8 @@ namespace ApiDemo
             public string type { get; set; } = "siso";
             public bool active { get; set; } = false;
             public JobOutput output { get; set; } = new JobOutput();
+            
+            // public bool cleanup { get; set; } = true;
         }
 
         public class Job

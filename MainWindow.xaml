@@ -21,6 +21,9 @@
             <Style TargetType="TextBox">
                 <Setter Property="Margin" Value="5"/>
             </Style>
+            <Style TargetType="PasswordBox">
+                <Setter Property="Margin" Value="5"/>
+            </Style>
             <Style TargetType="Label">
                 <Setter Property="Margin" Value="5,1,1,1"/>
                 <Setter Property="Padding" Value="0,1,2,1"/>
@@ -48,7 +51,7 @@
                 </StackPanel>
                 <StackPanel Grid.Column="1">
                     <Label>Password</Label>
-                    <TextBox Text="{Binding Password}"></TextBox>
+                    <PasswordBox local:PasswordBoxAssistant.BoundPassword="{Binding Password, Mode=TwoWay}" local:PasswordBoxAssistant.BindPassword="True" />
                 </StackPanel>
             </Grid>
             <Line Margin="5" StrokeThickness="1" Stroke="#FFABC3EA"/>
